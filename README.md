@@ -1,0 +1,1 @@
+An automated Python ETL pipeline that ingests and normalizes live regulatory updates via federal JSON REST APIs. It features an SQLite database layer utilizing an UPSERT pattern to save history while eliminating duplicate data records. The system dynamically queries this database to automatically rewrite and refresh clean, human-readable Markdown executive summaries.
