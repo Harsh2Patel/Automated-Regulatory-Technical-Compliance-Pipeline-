@@ -1,0 +1,6 @@
+# Ignore local SQLite databases
+*.db
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
