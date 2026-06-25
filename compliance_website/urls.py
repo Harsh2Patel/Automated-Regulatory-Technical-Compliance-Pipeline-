@@ -5,5 +5,5 @@ from tracker import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.dashboard, name='dashboard')
+    path('', views.dashboard_view, name='dashboard')
 ]

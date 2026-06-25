@@ -19,6 +19,22 @@
     <h1>Federal Register Compliance Tracker</h1>
     <p>Displaying tracked engineering and technical regulations sorted by newest publication date.</p>
 
+<div style="margin-bottom: 20px;">
+    <form method="GET" action="">
+        <input type="text"
+               name="search"
+               placeholder="Search regulations (e.g., manufacturing)..."
+               value="{{ search_query }}"
+               style="padding: 8px; width: 300px; border-radius: 4px; border: 1px solid #ccc;">
+        <button type="submit" style="padding: 8px 15px; border-radius: 4px; background-color: #0000bf; color: white; border: none; cursor: pointer;">
+            Search
+        </button>
+        {% if search_query %}
+            <a href="?" style="margin-left: 10px; color: #6c757d; text-decoration: none;">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
     <table>
         <thead>
             <tr>
@@ -29,7 +45,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for reg in regulations %}
+            {% for reg in items %}
             <tr>
                 <td><strong>{{ reg.document_number }}</strong></td>
                 <td>{{ reg.title }}</td>
