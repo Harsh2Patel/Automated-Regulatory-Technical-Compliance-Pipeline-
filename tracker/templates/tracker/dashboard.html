@@ -19,6 +19,65 @@
     <h1>Federal Register Compliance Tracker</h1>
     <p>Displaying tracked engineering and technical regulations sorted by newest publication date.</p>
 
+<script>
+    function switchTab(tabName) {
+        const dashContent = document.getElementById('content-dashboard');
+        const digestContent = document.getElementById('content-digest');
+        const dashTab = document.getElementById('tab-dashboard');
+        const digestTab = document.getElementById('tab-digest');
+
+        if (tabName === 'dashboard') {
+            dashContent.style.display = 'block';
+            digestContent.style.display = 'none';
+            dashTab.style.background = '#007BFF';
+            dashTab.style.color = 'white';
+            digestTab.style.background = '#f1f1f1';
+            digestTab.style.color = '#333';
+        } else {
+            dashContent.style.display = 'none';
+            digestContent.style.display = 'block';
+            digestTab.style.background = '#28a745';
+            digestTab.style.color = 'white';
+            dashTab.style.background = '#f1f1f1';
+            dashTab.style.color = '#333';
+        }
+    }
+</script>
+
+<div style="margin-bottom: 25px; border-bottom: 2px solid #e0e0e0; display: flex; gap: 10px;">
+        <button id="tab-dashboard" onclick="switchTab('dashboard')" style="padding: 10px 20px; font-size: 1rem; font-weight: bold; border: none; background: #007BFF; color: white; border-radius: 4px 4px 0 0; cursor: pointer;">
+            📊 Main Dashboard
+        </button>
+        <button id="tab-digest" onclick="switchTab('digest')" style="padding: 10px 20px; font-size: 1rem; font-weight: bold; border: none; background: #f1f1f1; color: #333; border-radius: 4px 4px 0 0; cursor: pointer;">
+            📥 Latest Pipeline Run ({% if latest_digest %}{{ latest_digest|length }}{% else %}0{% endif %})
+        </button>
+    </div>
+
+    <div id="content-digest" style="display: none; margin-bottom: 40px; padding: 20px; background-color: #f8f9fa; border-radius: 8px; border-left: 5px solid #28a745;">
+        <h2 style="margin-top: 0; color: #2c3e50; font-family: Arial, sans-serif;">📥 Latest Pipeline Session Log</h2>
+        <p style="color: #666; font-size: 0.95rem; font-family: Arial, sans-serif;">This block dynamically displays <strong>only</strong> the data records that were newly pulled during your absolute latest script execution run.</p>
+        <hr style="border: 0; border-top: 1px solid #e0e0e0; margin: 15px 0;">
+
+        {% if latest_digest %}
+            <div style="display: flex; flex-direction: column; gap: 15px; font-family: Arial, sans-serif;">
+                {% for reg in latest_digest %}
+                    <div class="digest-card" style="background: #ffffff; padding: 15px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                        <h3 style="margin: 0 0 8px 0; font-size: 1.1rem; color: #28a745;">📄 New Document Processed</h3>
+                        <p style="margin: 0 0 6px 0; font-weight: bold; color: #34495e;">{{ reg.title }}</p>
+                        <div style="font-size: 0.85rem; color: #7f8c8d;">
+                            <span>📅 Published: {{ reg.publication_date }}</span> |
+                            <span style="color: #e67e22; font-weight: bold;">🔧 Status:</span> Added in latest batch.
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="color: #999; font-family: Arial, sans-serif;">No execution batch logs found.</p>
+        {% endif %}
+    </div>
+
+    <div id="content-dashboard">
+
 <div style="margin-bottom: 20px;">
     <form method="GET" action="">
         <input type="text"
@@ -59,6 +118,7 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
 
 </body>
 </html>
