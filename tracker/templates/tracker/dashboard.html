@@ -44,7 +44,8 @@
     }
 </script>
 
-<div style="margin-bottom: 25px; border-bottom: 2px solid #e0e0e0; display: flex; gap: 10px;">
+<div style="margin-bottom: 25px; border-bottom: 2px solid #e0e0e0; display: flex; gap: 10px; align-items: center; justify-content: space-between; padding-bottom: 10px;">
+    <div style="display: flex; gap: 10px;">
         <button id="tab-dashboard" onclick="switchTab('dashboard')" style="padding: 10px 20px; font-size: 1rem; font-weight: bold; border: none; background: #007BFF; color: white; border-radius: 4px 4px 0 0; cursor: pointer;">
             📊 Main Dashboard
         </button>
@@ -52,6 +53,18 @@
             📥 Latest Pipeline Run ({% if latest_digest %}{{ latest_digest|length }}{% else %}0{% endif %})
         </button>
     </div>
+
+    <form action="/fetch-live-data/" method="POST" style="margin: 0; display: flex; gap: 8px;">
+        {% csrf_token %}
+        <input type="text"
+               name="custom_keywords"
+               placeholder="Type keywords to fetch (e.g. aviation, safety)..."
+               style="padding: 10px; font-size: 0.95rem; border: 1px solid #ccc; border-radius: 4px; width: 320px;">
+        <button type="submit" style="padding: 10px 15px; font-size: 0.95rem; font-weight: bold; border: none; background: #e67e22; color: white; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); white-space: nowrap;">
+            ⚡ Sync Live Data
+        </button>
+    </form>
+</div>
 
     <div id="content-digest" style="display: none; margin-bottom: 40px; padding: 20px; background-color: #f8f9fa; border-radius: 8px; border-left: 5px solid #28a745;">
         <h2 style="margin-top: 0; color: #2c3e50; font-family: Arial, sans-serif;">📥 Latest Pipeline Session Log</h2>
@@ -77,47 +90,34 @@
     </div>
 
     <div id="content-dashboard">
-
-<div style="margin-bottom: 20px;">
-    <form method="GET" action="">
-        <input type="text"
-               name="search"
-               placeholder="Search regulations (e.g., manufacturing)..."
-               value="{{ search_query }}"
-               style="padding: 8px; width: 300px; border-radius: 4px; border: 1px solid #ccc;">
-        <button type="submit" style="padding: 8px 15px; border-radius: 4px; background-color: #0000bf; color: white; border: none; cursor: pointer;">
-            Search
-        </button>
-        {% if search_query %}
-            <a href="?" style="margin-left: 10px; color: #6c757d; text-decoration: none;">Clear</a>
-        {% endif %}
-    </form>
-</div>
-
-    <table>
-        <thead>
-            <tr>
-                <th>Document Number</th>
-                <th>Title</th>
-                <th>Publication Date</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for reg in items %}
-            <tr>
-                <td><strong>{{ reg.document_number }}</strong></td>
-                <td>{{ reg.title }}</td>
-                <td>{{ reg.publication_date }}</td>
-                <td><a href="{{ reg.html_url }}" target="_blank">View Document</a></td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="4">No regulations found in the database. Run the fetch command!</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+        <table>
+            <thead>
+                <tr>
+                    <th>Document Number</th>
+                    <th>Title</th>
+                    <th>Publication Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reg in items %}
+                <tr>
+                    <td><strong>{{ reg.id }}</strong></td>
+                    <td>
+                        <a href="{% url 'document_detail' reg.pk %}" style="color: #007BFF; text-decoration: none; font-weight: bold;">
+                            {{ reg.title }}
+                        </a>
+                    </td>
+                    <td>{{ reg.publication_date }}</td>
+                    <td><a href="{{ reg.html_url }}" target="_blank">View Document</a></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">No regulations found in the database. Run the fetch command!</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 
 </body>

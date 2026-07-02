@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ document.title }} | Regulation Workspace</title>
+</head>
+<body style="font-family: Arial, sans-serif; margin: 40px; background-color: #f9f9f9; color: #333;">
+
+    <a href="{% url 'dashboard' %}" style="text-decoration: none; color: #007BFF; font-weight: bold;">← Back to Dashboard</a>
+
+    <hr style="border: 1px solid #e0e0e0; margin: 20px 0;">
+
+    <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        <span style="background: #e67e22; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: bold;">
+            {{ document.agency }}
+        </span>
+        <h1 style="color: #2c3e50; margin-top: 15px; margin-bottom: 5px;">{{ document.title }}</h1>
+        <p style="color: #666; font-size: 0.95rem; margin-bottom: 25px;">
+            Published: <strong>{{ document.publication_date }}</strong> | Doc ID: <code>{{ document.document_number }}</code>
+        </p>
+
+        <h3 style="color: #2c3e50;">Regulation Abstract</h3>
+        <p style="line-height: 1.6; font-size: 1.05rem; color: #444; background: #fdfdfd; padding: 20px; border-left: 4px solid #007BFF; margin-bottom: 30px;">
+            {{ document.abstract|default:"No summary text provided by agency." }}
+        </p>
+
+        <div>
+            <a href="{{ document.html_url }}" target="_blank" style="display: inline-block; background: #28a745; color: white; padding: 12px 20px; text-decoration: none; font-weight: bold; border-radius: 4px;">
+                🌐 View Official Federal Register Page
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>
