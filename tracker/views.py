@@ -1,45 +1,34 @@
 from django.shortcuts import render, redirect
 from .models import TechnicalCompliance
-from .pipeline import run_federal_register_pipeline
 
 
 def dashboard_view(request):
-    items = TechnicalCompliance.objects.all().order_by('-publication_date')
+    # Import run_pipeline locally to prevent circular dependencies
+    from .pipeline import run_pipeline
 
-    # 1. Find the exact timestamp of the absolute newest record added
-    latest_record = TechnicalCompliance.objects.all().order_by('-added_at').first()
+    if request.method == "POST" or request.GET.get('sync') == 'true' or 'keyword' in request.GET:
+        keyword = request.GET.get('keyword', '').strip()
 
-    if latest_record:
-        # 2. ONLY show records that share that exact same fetch session timestamp
-        latest_digest = TechnicalCompliance.objects.filter(added_at=latest_record.added_at)
-    else:
-        latest_digest = TechnicalCompliance.objects.none()
+        # 1. Fetch live data and receive newly created document instances
+        new_docs = run_pipeline(keyword=keyword if keyword else None)
+
+        # 2. Store newly inserted record IDs in session memory
+        request.session['latest_run_ids'] = [doc.id for doc in new_docs]
+
+        if request.method == "POST":
+            return redirect('dashboard')
+
+    # Fetch batch records from the last run
+    latest_ids = request.session.get('latest_run_ids', [])
+    digest_records = TechnicalCompliance.objects.filter(id__in=latest_ids).order_by('-added_at')
+
+    # All records for the main view
+    all_documents = TechnicalCompliance.objects.all().order_by('-publication_date')
 
     context = {
-        'items': items,
-        'latest_digest': latest_digest
+        'all_documents': all_documents,
+        'digest_records': digest_records,
+        'latest_run_count': digest_records.count(),
     }
+
     return render(request, 'tracker/dashboard.html', context)
-
-
-def fetch_live_data(request):
-    if request.method == "POST":
-        raw_keywords = request.POST.get('custom_keywords', '')
-
-        if raw_keywords.strip():
-            keyword_list = [kw.strip().lower() for kw in raw_keywords.split(',') if kw.strip()]
-        else:
-            keyword_list = ['safety', 'coast guard', 'environmental']
-
-        run_federal_register_pipeline(keyword_list)
-        return redirect('/?tab=digest')
-
-    return redirect('/')
-
-
-def document_detail_view(request, pk):
-    document = TechnicalCompliance.objects.get(pk=pk)
-    context = {
-        'document': document
-    }
-    return render(request, 'tracker/document_detail.html', context)

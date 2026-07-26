@@ -1,48 +1,49 @@
 import requests
 from .models import TechnicalCompliance
-from datetime import datetime, timedelta
 
 
-def run_federal_register_pipeline(keywords):
-    # 1. Look for documents published in the last 30 days
-    time_delta = datetime.now() - timedelta(days=30)
-    formatted_date = time_delta.strftime('%Y-%m-%d')
-
-    # Federal Register API Endpoint
+def run_pipeline(keyword=None):
     url = "https://www.federalregister.gov/api/v1/documents.json"
-    current_run_timestamp = datetime.now()
 
-    for keyword in keywords:
-        clean_keyword = keyword.strip()
-        if not clean_keyword:
+    params = {
+        'per_page': 100,
+        'order': 'newest',
+    }
+
+    if keyword:
+        params['conditions[term]'] = keyword
+
+    try:
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        results = data.get('results', [])
+    except Exception as e:
+        print(f"Error fetching data from Federal Register API: {e}")
+        return []
+
+    newly_created_docs = []
+
+    for item in results:
+        html_url = item.get('html_url', '')
+        if not html_url:
             continue
 
-        params = {
-            'conditions[term]': clean_keyword,
-            'conditions[publication_date][gte]': formatted_date,
-            'per_page': 100
-        }
+        title = item.get('title', 'Untitled')
+        abstract = item.get('abstract', '') or ''
+        pub_date = item.get('publication_date')
 
-        try:
-            response = requests.get(url, params=params)
-            if response.status_code != 200:
-                print(f"API Error: {response.status_code}")
-                continue
+        # ✅ Uses html_url as the unique identifier field on TechnicalCompliance
+        doc, created = TechnicalCompliance.objects.update_or_create(
+            html_url=html_url,
+            defaults={
+                'title': title,
+                'abstract': abstract,
+                'publication_date': pub_date,
+            }
+        )
 
-            data = response.json()
-            results = data.get('results', [])
+        if created:
+            newly_created_docs.append(doc)
 
-            for doc in results:
-                # FIX: We use title to match existing docs instead of hijacking the numeric id column
-                TechnicalCompliance.objects.update_or_create(
-                    title=doc.get('title', ''),
-                    defaults={
-                        'abstract': doc.get('abstract', '') or '',
-                        'publication_date': doc.get('publication_date'),
-                        'html_url': doc.get('html_url', ''),
-                        'added_at': current_run_timestamp
-                    }
-                )
-        except Exception as e:
-            print(f"Error processing keyword {clean_keyword}: {e}")
-            continue
+    return newly_created_docs

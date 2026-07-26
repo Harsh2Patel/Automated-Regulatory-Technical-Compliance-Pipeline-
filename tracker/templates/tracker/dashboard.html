@@ -2,123 +2,109 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Regulatory Compliance Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compliance Tracker</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f9f9f9; }
-        h1 { color: #333; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: #fff; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #007BFF; color: white; }
-        tr:hover { background-color: #f1f1f1; }
-        a { color: #007BFF; text-decoration: none; }
-        a:hover { text-decoration: underline; }
+        .nav-tab {
+            padding: 8px 16px;
+            border: 1px solid #dee2e6;
+            background: #f8f9fa;
+            cursor: pointer;
+            border-radius: 6px 6px 0 0;
+        }
+        .nav-tab.active {
+            background: #ffffff;
+            border-bottom: 2px solid #0d6efd;
+            font-weight: bold;
+        }
     </style>
 </head>
-<body>
+<body class="bg-light p-4">
 
-    <h1>Federal Register Compliance Tracker</h1>
-    <p>Displaying tracked engineering and technical regulations sorted by newest publication date.</p>
-
-<script>
-    function switchTab(tabName) {
-        const dashContent = document.getElementById('content-dashboard');
-        const digestContent = document.getElementById('content-digest');
-        const dashTab = document.getElementById('tab-dashboard');
-        const digestTab = document.getElementById('tab-digest');
-
-        if (tabName === 'dashboard') {
-            dashContent.style.display = 'block';
-            digestContent.style.display = 'none';
-            dashTab.style.background = '#007BFF';
-            dashTab.style.color = 'white';
-            digestTab.style.background = '#f1f1f1';
-            digestTab.style.color = '#333';
-        } else {
-            dashContent.style.display = 'none';
-            digestContent.style.display = 'block';
-            digestTab.style.background = '#28a745';
-            digestTab.style.color = 'white';
-            dashTab.style.background = '#f1f1f1';
-            dashTab.style.color = '#333';
-        }
-    }
-</script>
-
-<div style="margin-bottom: 25px; border-bottom: 2px solid #e0e0e0; display: flex; gap: 10px; align-items: center; justify-content: space-between; padding-bottom: 10px;">
-    <div style="display: flex; gap: 10px;">
-        <button id="tab-dashboard" onclick="switchTab('dashboard')" style="padding: 10px 20px; font-size: 1rem; font-weight: bold; border: none; background: #007BFF; color: white; border-radius: 4px 4px 0 0; cursor: pointer;">
-            📊 Main Dashboard
-        </button>
-        <button id="tab-digest" onclick="switchTab('digest')" style="padding: 10px 20px; font-size: 1rem; font-weight: bold; border: none; background: #f1f1f1; color: #333; border-radius: 4px 4px 0 0; cursor: pointer;">
-            📥 Latest Pipeline Run ({% if latest_digest %}{{ latest_digest|length }}{% else %}0{% endif %})
-        </button>
-    </div>
-
-    <form action="/fetch-live-data/" method="POST" style="margin: 0; display: flex; gap: 8px;">
-        {% csrf_token %}
-        <input type="text"
-               name="custom_keywords"
-               placeholder="Type keywords to fetch (e.g. aviation, safety)..."
-               style="padding: 10px; font-size: 0.95rem; border: 1px solid #ccc; border-radius: 4px; width: 320px;">
-        <button type="submit" style="padding: 10px 15px; font-size: 0.95rem; font-weight: bold; border: none; background: #e67e22; color: white; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); white-space: nowrap;">
+<div class="container bg-white p-4 rounded shadow-sm">
+    <!-- Sync Form -->
+    <form method="GET" action="" class="d-flex mb-4">
+        <input
+            type="text"
+            name="keyword"
+            class="form-control me-2"
+            placeholder="Type keywords to fetch (e.g. aviation, safety)..."
+            value="{{ request.GET.keyword|default:'' }}"
+        >
+        <input type="hidden" name="sync" value="true">
+        <button type="submit" class="btn btn-warning text-white fw-bold me-2">
             ⚡ Sync Live Data
         </button>
     </form>
-</div>
 
-    <div id="content-digest" style="display: none; margin-bottom: 40px; padding: 20px; background-color: #f8f9fa; border-radius: 8px; border-left: 5px solid #28a745;">
-        <h2 style="margin-top: 0; color: #2c3e50; font-family: Arial, sans-serif;">📥 Latest Pipeline Session Log</h2>
-        <p style="color: #666; font-size: 0.95rem; font-family: Arial, sans-serif;">This block dynamically displays <strong>only</strong> the data records that were newly pulled during your absolute latest script execution run.</p>
-        <hr style="border: 0; border-top: 1px solid #e0e0e0; margin: 15px 0;">
+    <!-- Navigation Tabs -->
+    <div class="mb-3 border-bottom pb-2">
+        <button id="tab-main" onclick="switchTab('main')" class="nav-tab active">
+            📊 Main Dashboard ({{ all_documents.count }})
+        </button>
 
-        {% if latest_digest %}
-            <div style="display: flex; flex-direction: column; gap: 15px; font-family: Arial, sans-serif;">
-                {% for reg in latest_digest %}
-                    <div class="digest-card" style="background: #ffffff; padding: 15px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                        <h3 style="margin: 0 0 8px 0; font-size: 1.1rem; color: #28a745;">📄 New Document Processed</h3>
-                        <p style="margin: 0 0 6px 0; font-weight: bold; color: #34495e;">{{ reg.title }}</p>
-                        <div style="font-size: 0.85rem; color: #7f8c8d;">
-                            <span>📅 Published: {{ reg.publication_date }}</span> |
-                            <span style="color: #e67e22; font-weight: bold;">🔧 Status:</span> Added in latest batch.
-                        </div>
+        <button id="tab-digest" onclick="switchTab('digest')" class="nav-tab">
+            📫 Latest Pipeline Run ({{ latest_run_count }})
+        </button>
+    </div>
+
+    <!-- Main Dashboard Content -->
+    <div id="content-main" class="tab-content">
+        <h3>📊 All Records</h3>
+        {% if all_documents %}
+            {% for doc in all_documents %}
+                <div class="card mb-2">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ doc.title }}</h5>
+                        <p class="text-muted small">Published: {{ doc.publication_date }}</p>
+                        <a href="{{ doc.html_url }}" target="_blank" class="btn btn-sm btn-outline-primary">View Federal Register</a>
                     </div>
-                {% endfor %}
-            </div>
+                </div>
+            {% endfor %}
         {% else %}
-            <p style="color: #999; font-family: Arial, sans-serif;">No execution batch logs found.</p>
+            <p class="text-muted">No records found. Click <strong>Sync Live Data</strong> above to populate the database.</p>
         {% endif %}
     </div>
 
-    <div id="content-dashboard">
-        <table>
-            <thead>
-                <tr>
-                    <th>Document Number</th>
-                    <th>Title</th>
-                    <th>Publication Date</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for reg in items %}
-                <tr>
-                    <td><strong>{{ reg.id }}</strong></td>
-                    <td>
-                        <a href="{% url 'document_detail' reg.pk %}" style="color: #007BFF; text-decoration: none; font-weight: bold;">
-                            {{ reg.title }}
-                        </a>
-                    </td>
-                    <td>{{ reg.publication_date }}</td>
-                    <td><a href="{{ reg.html_url }}" target="_blank">View Document</a></td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="4">No regulations found in the database. Run the fetch command!</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <!-- Latest Pipeline Run Content -->
+    <div id="content-digest" class="tab-content" style="display: none;">
+        <h3>📫 Latest Pipeline Run Results</h3>
+        {% if digest_records %}
+            {% for doc in digest_records %}
+                <div class="card mb-2 border-success">
+                    <div class="card-body">
+                        <h5 class="card-title text-success">📄 {{ doc.title }}</h5>
+                        <p class="text-muted small">Published: {{ doc.publication_date }} | <span class="badge bg-success">New Batch</span></p>
+                        <a href="{{ doc.html_url }}" target="_blank" class="btn btn-sm btn-outline-success">View Document</a>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info">
+                No new items were added during the most recent sync (all fetched documents were already saved).
+            </div>
+        {% endif %}
     </div>
+</div>
+
+<!-- Tab Switcher JS -->
+<script>
+    function switchTab(tabName) {
+        // Hide all tab contents
+        document.getElementById('content-main').style.display = 'none';
+        document.getElementById('content-digest').style.display = 'none';
+
+        // Deactivate all tab buttons
+        document.getElementById('tab-main').classList.remove('active');
+        document.getElementById('tab-digest').classList.remove('active');
+
+        // Show target tab & activate target button
+        document.getElementById('content-' + tabName).style.display = 'block';
+        document.getElementById('tab-' + tabName).classList.add('active');
+    }
+</script>
 
 </body>
 </html>
