@@ -24,7 +24,7 @@
 <body class="bg-light p-4">
 
 <div class="container bg-white p-4 rounded shadow-sm">
-    <!-- Sync Form -->
+    <!-- Live Sync Form -->
     <form method="GET" action="" class="d-flex mb-4">
         <input
             type="text"
@@ -52,20 +52,33 @@
 
     <!-- Main Dashboard Content -->
     <div id="content-main" class="tab-content">
-        <h3>📊 All Records</h3>
-        {% if all_documents %}
-            {% for doc in all_documents %}
-                <div class="card mb-2">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ doc.title }}</h5>
-                        <p class="text-muted small">Published: {{ doc.publication_date }}</p>
-                        <a href="{{ doc.html_url }}" target="_blank" class="btn btn-sm btn-outline-primary">View Federal Register</a>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3>📊 All Records</h3>
+            <!-- 🔍 Instant Search Bar -->
+            <input
+                type="text"
+                id="local-search-input"
+                class="form-control w-50"
+                placeholder="🔍 Search saved documents below..."
+                onkeyup="filterLocalDocuments()"
+            >
+        </div>
+
+        <div id="document-list">
+            {% if all_documents %}
+                {% for doc in all_documents %}
+                    <div class="card mb-2 doc-card">
+                        <div class="card-body">
+                            <h5 class="card-title doc-title">{{ doc.title }}</h5>
+                            <p class="text-muted small">Published: {{ doc.publication_date }}</p>
+                            <a href="{{ doc.html_url }}" target="_blank" class="btn btn-sm btn-outline-primary">View Federal Register</a>
+                        </div>
                     </div>
-                </div>
-            {% endfor %}
-        {% else %}
-            <p class="text-muted">No records found. Click <strong>Sync Live Data</strong> above to populate the database.</p>
-        {% endif %}
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">No records found. Click <strong>Sync Live Data</strong> above to populate the database.</p>
+            {% endif %}
+        </div>
     </div>
 
     <!-- Latest Pipeline Run Content -->
@@ -89,20 +102,33 @@
     </div>
 </div>
 
-<!-- Tab Switcher JS -->
+<!-- JavaScript for Tabs & Instant Search -->
 <script>
+    // Tab Switcher
     function switchTab(tabName) {
-        // Hide all tab contents
         document.getElementById('content-main').style.display = 'none';
         document.getElementById('content-digest').style.display = 'none';
 
-        // Deactivate all tab buttons
         document.getElementById('tab-main').classList.remove('active');
         document.getElementById('tab-digest').classList.remove('active');
 
-        // Show target tab & activate target button
         document.getElementById('content-' + tabName).style.display = 'block';
         document.getElementById('tab-' + tabName).classList.add('active');
+    }
+
+    // Instant Search Filter
+    function filterLocalDocuments() {
+        const query = document.getElementById('local-search-input').value.toLowerCase();
+        const cards = document.querySelectorAll('.doc-card');
+
+        cards.forEach(card => {
+            const title = card.querySelector('.doc-title').innerText.toLowerCase();
+            if (title.includes(query)) {
+                card.style.display = '';
+            } else {
+                card.style.display = 'none';
+            }
+        });
     }
 </script>
 
